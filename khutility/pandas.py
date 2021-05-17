@@ -5,6 +5,9 @@ Created on Mon May 13 10:42:45 2019
 @author: kyleh
 """
 
+from matplotlib.pyplot import subplots
+import pandas as pd
+
 def getColumn(df, name):
     """ THis gets a column from a Datafram regardless if it is an index or data column"""
     
@@ -16,3 +19,13 @@ def getColumn(df, name):
     else:
         raise ValueError('Name is not a data or index column')
     
+def plotFamily(df,x,y,ax=None):
+    if ax is None:
+        f,ax = subplots()
+    if isinstance(df, pd.core.groupby.generic.DataFrameGroupBy):
+        print('Plotting group')
+        for name,group in df:
+            print('Plotting {:s}'.format(str(name)))
+            group.plot(x,y,ax=ax, label=str(name))
+    else:
+        df.plot(x,y,ax=ax)
