@@ -19,13 +19,15 @@ def getColumn(df, name):
     else:
         raise ValueError('Name is not a data or index column')
     
-def plotFamily(df,x,y,ax=None):
+def plotFamily(df,x,y,ax=None,legend=True):
     if ax is None:
         f,ax = subplots()
+
     if isinstance(df, pd.core.groupby.generic.DataFrameGroupBy):
         print('Plotting group')
         for name,group in df:
             print('Plotting {:s}'.format(str(name)))
-            group.plot(x,y,ax=ax, label=str(name))
+            ax = group.plot(x,y,ax=ax, label=str(name),legend=legend)
+        return ax
     else:
-        df.plot(x,y,ax=ax)
+        return df.plot(x,y,ax=ax)
