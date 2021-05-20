@@ -24,9 +24,9 @@ def plotFamily(df,x,y,ax=None,legend=True):
         f,ax = subplots()
 
     if isinstance(df, pd.core.groupby.generic.DataFrameGroupBy):
-        print('Plotting group')
+        # print('Plotting group')
         for name,group in df:
-            print('Plotting {:s}'.format(str(name)))
+            # print('Plotting {:s}'.format(str(name)))
             ax = group.plot(x,y,ax=ax, label=str(name),legend=legend)
         return ax
     else:
