@@ -33,4 +33,4 @@ def complexns_core(strin):
         tmp = tmp[:loc] + tmp[(loc+1):] + 'j'
     return complex(tmp)
     
-complex = vectorize(complexns_core)
+complexns = vectorize(complexns_core)
