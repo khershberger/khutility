@@ -19,7 +19,7 @@ def getColumn(df, name):
     else:
         raise ValueError('Name is not a data or index column')
     
-def plotFamily(df,x,y,ax=None,legend=True):
+def plotFamily(df,x,y,ax=None,**kwargs):
     if ax is None:
         f,ax = subplots()
 
@@ -27,7 +27,7 @@ def plotFamily(df,x,y,ax=None,legend=True):
         # print('Plotting group')
         for name,group in df:
             # print('Plotting {:s}'.format(str(name)))
-            ax = group.plot(x,y,ax=ax, label=str(name),legend=legend)
+            ax = group.plot(x,y,ax=ax, label=str(name), **kwargs)
         return ax
     else:
-        return df.plot(x,y,ax=ax)
+        return df.plot(x,y,ax=ax,**kwargs)
