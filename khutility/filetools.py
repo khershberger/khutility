@@ -43,3 +43,18 @@ def find(path, patternInclude='.*', patternExclude='$a'):
         filelist += [ os.path.join(t[0], x) for x in t[2] if reInclude.search(x) and not reExclude.search(x)]
 
     return filelist
+
+def extractFromFilename(pattern, s):
+    # check input
+    if not isinstance(s,str):
+        return 'UNK'
+    
+    if isinstance(pattern, re.Pattern):
+        m = pattern.findall(s)
+    else:    
+        m = re.findall(pattern, s)
+        
+    if m:
+        return m[-1]  # Return last occurance
+    else:
+        return 'UNK'
