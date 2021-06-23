@@ -72,7 +72,7 @@ class DataMerger():
                     xold = g[columnInterp].values
                     
                     idx_start = 0
-                    idx_stop  = -1
+                    idx_stop  = None
                     
                     # Check for monotonicity
                     if np.any(np.diff(xold) < 0):
