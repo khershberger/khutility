@@ -24,7 +24,8 @@ class DataMerger():
         self.df = pd.DataFrame()
         self.extractors = {}
         
-    def load(self, filelist, columnMap=None, columnInterp=None, interpStep=1., columnGroup=None, handler=None):
+    def load(self, filelist, columnMap=None, columnInterp=None, interpStep=1., 
+             columnGroup=None, sortGroup=False, handler=None):
         for fidx,file in enumerate(filelist):
             if isinstance(file, str):
                 fname = file
@@ -67,6 +68,10 @@ class DataMerger():
                 groups = dfin.groupby(columnGroup)
                 for k,g in groups:
                     # print('Processing group {:s}'.format(str(k)))
+                    
+                    if sortGroup:
+                        g.sort_values([columnInterp], ascending=True, inplace=True)
+                    
                     cols = list(g.columns)
                     cols.remove(columnInterp)
                     xold = g[columnInterp].values
