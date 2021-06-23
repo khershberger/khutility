@@ -99,11 +99,20 @@ class DataMerger():
                             continue
                         # df.print('Interpolating Column {:s}'.format(c))
                         try:
-                            dtmp[c] = interp1d(xold[idx_start:idx_stop], g[c][idx_start:idx_stop], kind='linear')(xnew)
-                        except ValueError:
+                            idx_for_interp = np.full(len(g[c]), False)
+                            idx_for_interp[idx_start:idx_stop] = True
+                            # Only use indexes with finite values
+                            idx_for_interp *= np.isfinite(g[c].values)
+                            
+                            dtmp[c] = interp1d(xold[idx_for_interp], 
+                                               g[c][idx_for_interp], 
+                                               kind='linear',
+                                               bounds_error=False)(xnew)
+                        except (ValueError, TypeError) as e:
                             # Assuming this is a static data column
                             # Just broadcast data from first element
                             # print('Copying ', c)
+                            # print('Exception during {:s}'.format(c))
                             dtmp[c] = [g.iloc[0][c]] * len(xnew)
                     out.append(dtmp)
             
