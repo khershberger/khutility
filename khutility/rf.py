@@ -24,16 +24,47 @@ def evm_test():
 
     #pout = 20.0*np.log10(vmeas_mag)
     pout = 10.0*np.log10(vmeas_mag**2/(2*50.0)) + 30
-    
     phase = vmeas_phase
+    
+    pin = df['Input Power']
+    gain = df['|S21| (dB)']
+    phase = df['<S21 (deg)']
+    pout = pin+gain
 
     evm_pin1, evm1 = calcevm_interp(pin, pout, phase, 1, -10, 6, method='a')
     evm_pin2, evm2 = calcevm_interp(pin, pout, phase, 1, -10, 6, method='b')
     evm3 = calcevm(pin, pout, phase, 1, -10, 6)
     
     evm_ofdm    = 20.0 * np.log10(calcevm(pin,pout,phase,1,-10,8, ccdf=ccdfOfdm, allow_clipping=True))
-    evm_qpsk    = 20.0 * np.log10(calcevm(pin,pout,phase,1,-10,5, ccdf=ccdfQpsk, allow_clipping=True))
-    evm_twotone = 20.0 * np.log10(calcevm(pin,pout,phase,1,-10,3, ccdf=ccdfTwoTone, allow_clipping=True))
+    # evm_qpsk    = 20.0 * np.log10(calcevm(pin,pout,phase,1,-10,5, ccdf=ccdfQpsk, allow_clipping=True))
+    # evm_twotone = 20.0 * np.log10(calcevm(pin,pout,phase,1,-10,3, ccdf=ccdfTwoTone, allow_clipping=True))
+
+    evm_amam = 20.0 * np.log10(calcevm(pin, pout, 0*phase, 1,-10,8, ccdf=ccdfOfdm, allow_clipping=True))
+    evm_ampm = 20.0 * np.log10(calcevm(pin, pin, phase, 1,-10,8, ccdf=ccdfOfdm, allow_clipping=True))
+
+    amam = np.concatenate([[0], np.diff(gain)/np.diff(pin)])
+    ampm = np.concatenate([[0], np.diff(phase)/np.diff(pin)])
+
+    plt.figure()
+    plt.plot(pout, evm_amam, label='AMAM Only')
+    plt.plot(pout, evm_ampm, label='AMPM Only')
+    plt.plot(pout, evm_ofdm, label='Total')
+    plt.title('Estimated EVM from AMAM/AMPM curves')
+    plt.xlabel('Output Power (dBm)')
+    plt.ylabel('EVM (dB)')
+    plt.grid()
+    plt.legend()
+
+    plt.figure()
+    plt.plot(pout, amam, label='AMAM (dGain/dP)')
+    plt.plot(pout, ampm, label='AMPM (dPhase/dP)')
+    plt.title('True AMAM/AMPM (Slope of Gain & Phase)')
+    plt.xlabel('Output Power (dBm)')
+    plt.ylabel('AMAM (dB/dB), AMPM (deg/dB)')
+    plt.grid()
+    plt.legend()
+
+
 
 def pdfOfdm(x):
     return np.exp(-x)
