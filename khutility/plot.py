@@ -12,9 +12,13 @@ from PyQt5.QtWidgets import QApplication, QWidget
 
 logger = logging.getLogger(__name__)
 
-def to_clipboard(fig):
+def toClipboard(fig):
   QApplication.clipboard().setImage(QWidget.grab(fig.canvas).toImage())
   print('figure %d copied to clipboard' % fig.number)
+
+def to_clipboard(fig):
+    logger.warning('to_clipboard() deprecated.  Use toClipboard instead.')
+    toClipboard(fig)
 
 def plotWithMultiX(table, **kwargs):
     labelsize = kwargs.pop('labelsize', None)
