@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 import logging
 import timeit
+import skrf
 
 #logging.basicConfig(format='%(asctime)s %(message)s')
 logging.basicConfig()
@@ -326,3 +327,32 @@ def calcevm(pin, pout, phase, step, llimit, hlimit, ccdf=None, allow_clipping=Fa
 
     return evm
 
+def deembed(Ni, NA, NB, fixture_format=None, allow_interpolation=False):
+    """ Deembeds fixtures from S-Parameter data
+    
+    Ni: Input network to deembed (skrf Network object)
+    
+    NA,NB are the fixture matrices.
+    fixture_format specifies what matrix format is used
+        'inv':  skrf Network of inverse
+        'std':  skrf Network
+        
+    Returns deembedded S-matrix
+    """
+    
+    NA = NA.interpolate_from_f( Ni.frequency )
+    NB = NB.interpolate_from_f( Ni.frequency )
+    
+    if fixture_format == 'inv':
+        TA_inv = NA.t
+        TB_inv = NB.t
+    elif fixture_format == 'std':
+        TA_inv = NA.inv.t
+        TB_inv = NB.inv.t
+    else:
+        raise Exception('Unknown matrix format: {:s}'.format(fixture_format))
+
+
+    No = Ni.copy()
+    No.s = skrf.network.t2s( TA_inv @ Ni.t @ TB_inv)
+    return No
