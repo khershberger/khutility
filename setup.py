@@ -8,11 +8,5 @@ setup(name = 'khutility',
     authon = 'Kyle Hershberger',
     version = '0.1.1',
     packages = ['khutility'],
-    install_requires = [
-        'matplotlib',
-        'numpy',
-        'pandas',
-        'pyqt5',
-        'scipy'
-        ]
+    install_requires = [ ]
     )
