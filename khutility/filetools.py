@@ -44,10 +44,10 @@ def find(path, patternInclude='.*', patternExclude='$a'):
 
     return filelist
 
-def extractFromFilename(pattern, s):
+def extractFromFilename(pattern, s, unknown='UNK'):
     # check input
     if not isinstance(s,str):
-        return 'UNK'
+        return unknown
     
     if isinstance(pattern, re.Pattern):
         m = pattern.findall(s)
@@ -57,4 +57,4 @@ def extractFromFilename(pattern, s):
     if m:
         return m[-1]  # Return last occurance
     else:
-        return 'UNK'
+        return unknown
