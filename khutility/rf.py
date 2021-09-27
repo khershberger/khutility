@@ -5,6 +5,8 @@ Created on Thu Jan 31 16:52:52 2019
 @author: kyleh
 """
 
+from collections.abc import Sequence
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
@@ -327,32 +329,71 @@ def calcevm(pin, pout, phase, step, llimit, hlimit, ccdf=None, allow_clipping=Fa
 
     return evm
 
-def deembed(Ni, NA, NB, fixture_format=None, allow_interpolation=False):
+def generateThru():
+    IL = 0.001
+    RL = 0.001
+    S = np.array([[RL,1-IL],[1-IL,RL]])
+    N = skrf.Network(frequency=skrf.Frequency(0,1e12,2),
+                     s=np.broadcast_to(S,(2,2,2)))
+    return N
+
+def deembed(Ni, N, fmt=None, allow_interpolation=False):
     """ Deembeds fixtures from S-Parameter data
     
     Ni: Input network to deembed (skrf Network object)
     
-    NA,NB are the fixture matrices.
+    N list of fixture matrices
     fixture_format specifies what matrix format is used
         'inv':  skrf Network of inverse
         'std':  skrf Network
         
     Returns deembedded S-matrix
+    
+    ToDo:
+        * Implement handling of NA or NB being None (no fixture)
+        * Exception if fixture frequency range does not cover data range
     """
     
-    NA = NA.interpolate_from_f( Ni.frequency )
-    NB = NB.interpolate_from_f( Ni.frequency )
+    ports = Ni.number_of_ports
     
-    if fixture_format == 'inv':
-        TA_inv = NA.t
-        TB_inv = NB.t
-    elif fixture_format == 'std':
-        TA_inv = NA.inv.t
-        TB_inv = NB.inv.t
-    else:
-        raise Exception('Unknown matrix format: {:s}'.format(fixture_format))
+    if ports != 2:
+        raise ValueError('Deembedding only supported for 2-port networks')
 
+    if isinstance(fmt, str) or not isinstance(fmt, Sequence):
+        tmp = fmt
+        fmt = [tmp] * ports
+    else:
+        # Get copy so we don't mangle source
+        fmt = fmt.copy()
+        
+    if isinstance(N, str) or not isinstance(N, Sequence):
+        tmp = N
+        N = [tmp] * ports
+    else:
+        # Get copy so we don't mangle source
+        N = N.copy()
+
+
+    if len(fmt) != ports or len(N) != ports:
+        raise ValueError('Length of N and fmt must match number of ports in Ni')
+   
+    T_inv = []
+    for k in range(ports):
+        if N[k] is None:
+            N[k] = generateThru()
+   
+        N[k] = N[k].interpolate_from_f( Ni.frequency )
+
+        if fmt[k] == 'inv':
+            tmp = N[k].t
+        elif fmt[k] == 'std':
+            tmp = N[k].inv.t
+        else:
+            raise Exception('Unknown matrix format: {:s}'.format(fmt[k]))
+
+        T_inv.append(tmp)
 
     No = Ni.copy()
-    No.s = skrf.network.t2s( TA_inv @ Ni.t @ TB_inv)
+    
+    No.s = skrf.network.t2s( T_inv[0] @ Ni.t @ T_inv[1] )
     return No
