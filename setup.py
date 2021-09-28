@@ -6,7 +6,7 @@ except ImportError:
 setup(name = 'khutility',
     description = 'Utility Functions by and for Kyle',
     authon = 'Kyle Hershberger',
-    version = '0.2',
+    version = '0.3.0',
     packages = ['khutility'],
     install_requires = [ ]
     )
