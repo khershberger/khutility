@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def find(path, patternInclude='.*', patternExclude='$a'):
+def find(path, patternInclude='.*', patternExclude='(?!x)x'):
     """
     Parameters
     ----------
@@ -32,6 +32,13 @@ def find(path, patternInclude='.*', patternExclude='$a'):
     List of filenames relative to specified path
 
     """
+    
+    # See if an empty include/exclude patterns were passed in and replace
+    # with an appropriate regex
+    if patternInclude is None:
+        patternInclude = '.'                  # Match anything
+    if patternExclude is None or patternExclude == '':
+        patternExclude = '(?!x)x'             # Match nothing
     
     reInclude = re.compile(patternInclude)
     reExclude = re.compile(patternExclude)
