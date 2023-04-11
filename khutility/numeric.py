@@ -39,6 +39,21 @@ def complexns_core(strin):
 
 complexns = vectorize(complexns_core)
 
+prefix_si = {
+    "G": 1e9,
+    "M": 1e6,
+    "k": 1e3,
+    "r": 1,
+    ".": 1,
+    None: 1,
+    "m": 1e-3,
+    "u": 1e-6,
+    "n": 1e-9,
+    "p": 1e-12,
+    "f": 1e-15,
+    "a": 1e-18,
+}
+
 
 def engToFloat(s, debug=False):
     m = search(
@@ -56,20 +71,7 @@ def engToFloat(s, debug=False):
     if debug:
         print(f"[{sSign}] [{sWhole}] [{sRadix}] [{sFraction}] [{sExponent}] [{sExtra}]")
 
-    mult = {
-        "G": 1e9,
-        "M": 1e6,
-        "k": 1e3,
-        "r": 1,
-        ".": 1,
-        None: 1,
-        "m": 1e-3,
-        "u": 1e-6,
-        "n": 1e-9,
-        "p": 1e-12,
-        "f": 1e-15,
-        "a": 1e-18,
-    }.get(sRadix)
+    mult = prefix_si.get(sRadix)
 
     if mult is None:
         raise ValueError("Unknown radix symbol: " + str(sRadix))
@@ -87,48 +89,69 @@ def engToFloat(s, debug=False):
     return val
 
 
-def floatToEng(x, sigfig=3, fmtstr=None, si=True):
+def floatToEng(x, sigfig=3, si=True, replace_decimal=False):
     """
     Original code from: https://stackoverflow.com/a/19270863
     Modified since then
     
-    Returns float/int value <x> formatted in a simplified engineering format -
+    Returns float/int value x formatted in a simplified engineering format -
     using an exponent that is a multiple of 3.
 
     sigfig: Number of significatn figures
-    fmtstr: printf-style string used to format the value before the exponent.
-
     si: if true, use SI suffix for exponent, e.g. k instead of e3, n instead of
     e-9 etc.
+    replace_decimal: If true, si suffix will be used for the decimal point
 
-    E.g. with format='%.2f':
-        1.23e-08 => 12.30e-9
-             123 => 123.00
-          1230.0 => 1.23e3
-      -1230000.0 => -1.23e6
-
-    and with si=True:
-          1230.0 => 1.23k
+    With si=True:
+          1230.0 => 1.23k      (sigfig=3)
+          1230.0 => 1k         (sigfig=1)
       -1230000.0 => -1.23M
-    """
 
+    With si=True and replace_decimal=True:
+          1230.0 => 1k23       (sigfig=3)
+          1230.0 => 1k         (sigfig=1)
+      -1230000.0 => -1M23
+    
+    """
     sign = ""
     if x < 0:
         x = -x
         sign = "-"
-    exp = int(floor(log10(x)))
-    exp3 = exp - (exp % 3)
-    x3 = x / (10 ** exp3)
+    e = int(floor(log10(x)))
+    e3 = e - (e % 3)
 
-    if si and exp3 >= -24 and exp3 <= 24 and exp3 != 0:
-        exp3_text = "yzafpnum kMGTPEZY"[round((exp3 - (-24)) / 3)]
-    elif exp3 == 0:
-        exp3_text = ""
+    # Figure out unit symbol
+    if si and e3 >= -24 and e3 <= 24 and e3 != 0:
+        e3_text = "yzafpnum kMGTPEZY"[round((e3 - (-24)) / 3)]
+    elif e3 == 0:
+        e3_text = ""
     else:
-        exp3_text = "e%s" % exp3
+        e3_text = "e%s" % e3
 
-    if fmtstr is None:
-        fmtstr = "%.{:d}f".format(sigfig - 1 + exp - exp3)
-        # print(fmtstr)
+    # Convert to scientific notation with desired precision
+    s = f"{{:.{sigfig-1}e}}".format(x)
 
-    return ("%s" + fmtstr + "%s") % (sign, x3, exp3_text)
+    # Remove decimal & strip off trailing e-notation
+    s = s[: s.find("e")].replace(".", "")
+
+    # Now figure out where to place decimal
+    position = e - e3 + 1
+    # print(f"{e=} {e3=} {position=} {s=}")
+
+    if position < sigfig:
+        if replace_decimal and si:
+            decimal = e3_text
+            unit = ""
+        else:
+            decimal = "."
+            unit = e3_text
+
+        s = s[0:position] + decimal + s[position:] + unit
+    else:
+        # Pad with zeros
+        s += "0" * (position - sigfig) + e3_text
+
+    # Add sign & multiplier symbol
+    s = sign + s
+
+    return s
